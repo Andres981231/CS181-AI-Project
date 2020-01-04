@@ -58,7 +58,7 @@ except NameError:
 def main():
     global SCREEN, FPSCLOCK, episilon, started, vi
     training = 0
-    episilon = 0.5
+    episilon = 0
     started = False
     vi = False
     pygame.init()
@@ -136,10 +136,10 @@ def main():
         movementInfo = showWelcomeAnimation()
         started = True
         crashInfo = mainGame(movementInfo)
-        episilon *= 0.99
+        episilon *= 0.995
         showGameOverScreen(crashInfo)
         training += 1
-        if training > 1000 and not vi:
+        if training > 30 and not vi:
             print(training,'times trained!')
             vi = True
 
@@ -238,12 +238,12 @@ def mainGame(movementInfo):
     # player velocity, max velocity, downward accleration, accleration on flap
     playerVelY    =  0   # player's velocity along Y, default same as playerFlapped
     playerMaxVelY =  10   # max vel along Y, max descend speed
-    playerMinVelY =  -8   # min vel along Y, max ascend speed
-    playerAccY    =   1   # players downward accleration
+    playerMinVelY =  -9   # min vel along Y, max ascend speed
+    playerAccY    =   1.5   # players downward accleration
     playerRot     =  45   # player's rotation
     playerVelRot  =   3   # angular speed
     playerRotThr  =  20   # rotation threshold
-    playerFlapAcc =  -8  # players speed on flapping
+    playerFlapAcc =  -9  # players speed on flapping
     playerFlapped = False # True when player flaps
 
 
@@ -281,7 +281,7 @@ def mainGame(movementInfo):
             #episilon *= 0.99
             randomaction = random.uniform(0, 1)
             #random fly flip
-            if randomaction >= 0.5:
+            if randomaction >= 0.9:
                 if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
@@ -515,7 +515,7 @@ def getRandomPipe():
     gapY = random.randrange(0, int(BASEY * 0.6 - PIPEGAPSIZE))
     gapY += int(BASEY * 0.2)
     pipeHeight = IMAGES['pipe'][0].get_height()
-    pipeX = SCREENWIDTH 
+    pipeX = SCREENWIDTH
 
     return [
         {'x': pipeX, 'y': gapY - pipeHeight},  # upper pipe
