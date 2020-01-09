@@ -56,9 +56,10 @@ except NameError:
 
 
 def main():
-    global SCREEN, FPSCLOCK, episilon, started, vi
+    global SCREEN, FPSCLOCK, episilon, alpha, started, vi
     training = 0
     episilon = 0
+    alpha = 0.6
     started = False
     vi = False
     pygame.init()
@@ -137,11 +138,14 @@ def main():
         started = True
         crashInfo = mainGame(movementInfo)
         episilon *= 0.995
-        showGameOverScreen(crashInfo)
+        alpha *= 1
+        score = showGameOverScreen(crashInfo)
         training += 1
-        if training > 30 and not vi:
-            print(training,'times trained!')
+        if training > 400 and not vi:
+            print(training-1,'times trained!')
             vi = True
+        else:
+            print('round:',training,' score:',score)
 
 
 def showWelcomeAnimation():
@@ -206,7 +210,6 @@ def showWelcomeAnimation():
 
 Qvalues = {}
 discount = 0.8
-alpha = 0.6
 
 def mainGame(movementInfo):
     score = playerIndex = loopIter = 0
@@ -253,7 +256,7 @@ def mainGame(movementInfo):
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
-            crashstate = getLegalState(playerx,playery,lowerPipes)
+            crashstate = getLegalState(playerx,playery,lowerPipes,playerVelY)
             Qvalues[(crashstate,True)] = -100
             Qvalues[(crashstate,False)] = -100
 
@@ -269,7 +272,7 @@ def mainGame(movementInfo):
 
         playerFlapped = False
         flip = random.uniform(0, 1)
-        state = getLegalState(playerx,playery,lowerPipes)
+        state = getLegalState(playerx,playery,lowerPipes,playerVelY)
         #print('current state:',state)
         if(flip > episilon):
             playerFlapped = computeActionFromQvalues(state)
@@ -383,13 +386,13 @@ def getQvalue(state, action):
         return Qvalues[(state,action)]
     return 0
 
-def getLegalState(playerx,playery,lowerPipes):
+def getLegalState(playerx,playery,lowerPipes,playerVelY):
     Pipe0 = lowerPipes[0]
     Pipe1 = lowerPipes[1]
     if(playerx - (Pipe0['x'] + IMAGES['pipe'][0].get_width()) >= 0):
-        return (int((Pipe1['x'] + IMAGES['pipe'][0].get_width() - playerx)/15), int((Pipe1['y'] - playery)/15))
+        return (int((Pipe1['x'] + IMAGES['pipe'][0].get_width() - playerx)/15), int((Pipe1['y'] - playery)/15),playerVelY/3)
     else:
-        return (int((Pipe0['x'] + IMAGES['pipe'][0].get_width() - playerx)/15), int((Pipe0['y'] - playery)/15))
+        return (int((Pipe0['x'] + IMAGES['pipe'][0].get_width() - playerx)/15), int((Pipe0['y'] - playery)/15),playerVelY/3)
 
 def computeValueFromQvalues(nextstate):
     maxv = float("-inf")
@@ -431,7 +434,7 @@ def getNextState(playerx,playery,playerVelY,playerMaxVelY,playerMinVelY,playerAc
     '''
     reward = 1
 
-    return [getLegalState(playerx,playery,ltemp), reward]
+    return [getLegalState(playerx,playery,ltemp,playerVelY), reward]
 
 
 def showGameOverScreen(crashInfo):
@@ -455,7 +458,8 @@ def showGameOverScreen(crashInfo):
         SOUNDS['die'].play()
 
     while True:
-        return
+        #print('score:',score)
+        return score
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
@@ -512,8 +516,8 @@ def playerShm(playerShm):
 def getRandomPipe():
     """returns a randomly generated pipe"""
     # y of gap between upper and lower pipe
-    gapY = random.randrange(0, int(BASEY * 0.6 - PIPEGAPSIZE))
-    gapY += int(BASEY * 0.2)
+    gapY = random.randrange(0, int(BASEY * 0.5 - PIPEGAPSIZE))
+    gapY += int(BASEY * 0.3)
     pipeHeight = IMAGES['pipe'][0].get_height()
     pipeX = SCREENWIDTH
 
